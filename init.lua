@@ -84,9 +84,17 @@ function m:init()
     }
     m.canvas:show()
 
-    m.screen_watcher = hs.screen.watcher.new(function()
-      m.logger.i('screen changed')
-    end):start()
+    -- Rollover count at end of day
+    hs.timer.doAt("0:00","1d", function()
+      m:_saveState()
+      m:_loadState()
+      m.canvas[2] = m:_desktopText()
+    end)
+
+    -- m.screen_watcher = hs.screen.watcher.new(function()
+    --   m.logger.d('screen changed')
+    --   -- TODO update positioning of text
+    -- end):start()
   end
 end
 
@@ -283,8 +291,30 @@ function m:_getWeekStart()
 end
 
 function m:_desktopText()
-  return string.format("Today: %s Week: %d", string.rep("🍉", m.aggregatedState.day.count),
-    m.aggregatedState.week.count)
+  local timeLeft = m:_timeLeft()
+  if timeLeft == nil then
+    timeLeft = "Idle"
+  end
+
+  local melonBar = "🥚"
+  if m.aggregatedState.day.count > 0 then 
+    melonBar = string.rep("🍉", m.aggregatedState.day.count)
+  end
+
+  return string.format("Today: %s Week: %s (%s)",
+    melonBar,
+    m.aggregatedState.week.count > 0 and m.aggregatedState.week.count or "🥚",
+    timeLeft
+  )
+end
+
+function m:_timeLeft()
+  if not m:isIdle() then
+    local minutes = math.ceil((m.stopTime - os.time()) / 60)
+    return string.format("%02dm", minutes)
+  end
+
+  return nil
 end
 
 function m:_tick()
@@ -292,6 +322,10 @@ function m:_tick()
     local minutes = math.ceil((m.stopTime - os.time()) / 60)
     local title = string.format("%02dm 🍉", minutes)
     m.menu:setTitle(title)
+
+    if m.canvas ~= nil then
+      m.canvas[2].text = m:_desktopText()
+    end
 
     if os.time() >= m.stopTime then
       m:complete()
