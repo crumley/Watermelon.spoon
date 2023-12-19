@@ -86,6 +86,7 @@ function m:init()
 
     -- Rollover count at end of day
     hs.timer.doAt("0:00","1d", function()
+      m.logger.d('Rolling over day...')
       m:_saveState()
       m:_loadState()
       m.canvas[2] = m:_desktopText()
@@ -99,7 +100,8 @@ function m:init()
 end
 
 function m:_saveState()
-  settings.set(m.settingsKey .. ".aggregatedState", m.aggregatedState)
+  settings.set(m.settingsKey .. ".aggregatedState.day", m.aggregatedState.day)
+  settings.set(m.settingsKey .. ".aggregatedState.week", m.aggregatedState.week)
   settings.setDate(m.settingsKey .. ".startTime", m.startTime or 0)
   settings.setDate(m.settingsKey .. ".pauseTime", m.pauseTime or 0)
   settings.setDate(m.settingsKey .. ".stopTime", m.stopTime or 0)
@@ -119,7 +121,11 @@ function m:_loadState()
   m.pauseTime = pauseTime
   m.stopTime = stopTime
 
-  m.aggregatedState = settings.get(m.settingsKey .. ".aggregatedState") or m.aggregatedState
+  -- Ensure aggregatedState.day != week are not the same table in memory by loading seperately and creating a new table for aggregatedState
+  m.aggregatedState = {
+    day = settings.get(m.settingsKey .. ".aggregatedState.day") or m.aggregatedState.day,
+    week = settings.get(m.settingsKey .. ".aggregatedState.week") or m.aggregatedState.week,
+  }
 
   m.logger.i('_loadState 1', hs.inspect(m.aggregatedState))
 
@@ -233,8 +239,10 @@ function m:complete()
   m.logger.d('complete')
 
   m:_incrementWatermelon()
-  m:_writeLogEntry()
   m:_saveState()
+
+  -- TODO log failure
+  pcall(function() m:_writeLogEntry() end)
 
   hs.alert.show("🍉 Watermelon! 🍉", { textSize = m.alertTextSize }, m.alertDuration)
   hs.sound.getByName("Submarine"):play()
