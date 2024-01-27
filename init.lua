@@ -7,6 +7,8 @@ local timer = require("hs.timer")
 local menubar = require("hs.menubar")
 local settings = require("hs.settings")
 
+local util = dofile(hs.spoons.resourcePath("util.lua"))
+
 local m = {}
 m.__index = m
 
@@ -20,7 +22,7 @@ m.homepage = "https://github.com/Hammerspoon/Spoons"
 -- Settings
 
 m.logFilePath = nil
-m.settingsKey = m.name .. ".pomoState"
+m.settingsKey = m.name .. ".watermelonState"
 
 -- set this to true to always show the menubar item
 m.alwaysShowMenuBar = true
@@ -28,8 +30,11 @@ m.desktopDisplay = true
 
 -- Font size for alert
 m.alertTextSize = 80
+m.alertDuration = 5
+m.alertSound = true
+m.alertInvert = true
 
-m.logger = logger.new('Hammerdora', 'debug')
+m.logger = logger.new('Watermelon', 'debug')
 m.timer = nil
 m.startTime = nil
 m.pauseTime = nil
@@ -244,15 +249,24 @@ function m:complete()
   -- TODO log failure
   pcall(function() m:_writeLogEntry() end)
 
-  hs.timer.doAfter(0, function()
-    hs.alert.show("🍉 Watermelon! 🍉", { textSize = m.alertTextSize }, m.alertDuration)
-    hs.sound.getByName("Submarine"):play()
-    hs.screen.setInvertedPolarity(true)
-  end)
+  if m.alertDuration > 0 then
+    if( util:countToWatermelon( m.aggregatedState.day.count ) == "🍉" ) then
+      hs.alert.show("🍉 Watermelon! 🍉", { textSize = m.alertTextSize }, m.alertDuration)
+    else
+      hs.alert.show("Break Time", { textSize = m.alertTextSize }, m.alertDuration)
+    end
+  end
+
+  -- TODO sound + invert check
+
+  hs.sound.getByName("Submarine"):play()
+  hs.screen.setInvertedPolarity(true)
+
   hs.timer.doAfter(2, function()
     hs.screen.setInvertedPolarity(false)
     hs.sound.getByName("Submarine"):play()
   end)
+  
   hs.timer.doAfter(4, function()
     hs.screen.setInvertedPolarity(false)
   end)
@@ -309,14 +323,9 @@ function m:_desktopText()
     timeLeft = "Idle"
   end
 
-  local melonBar = "🥚"
-  if m.aggregatedState.day.count > 0 then
-    melonBar = string.rep("🍉", m.aggregatedState.day.count)
-  end
-
   return string.format("Today: %s Week: %s (%s)",
-    melonBar,
-    m.aggregatedState.week.count > 0 and m.aggregatedState.week.count or "🥚",
+    util:countToWatermelon(m.aggregatedState.day.count),
+    util:countToWatermelon(m.aggregatedState.week.count),
     timeLeft
   )
 end
