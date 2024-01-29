@@ -85,7 +85,7 @@ function m:init()
     m.canvas:show()
 
     -- Rollover count at end of day
-    hs.timer.doAt("0:00","1d", function()
+    hs.timer.doAt("0:00", "1d", function()
       m.logger.d('Rolling over day...')
       m:_saveState()
       m:_loadState()
@@ -244,11 +244,16 @@ function m:complete()
   -- TODO log failure
   pcall(function() m:_writeLogEntry() end)
 
-  hs.alert.show("🍉 Watermelon! 🍉", { textSize = m.alertTextSize }, m.alertDuration)
-  hs.sound.getByName("Submarine"):play()
-  hs.screen.setInvertedPolarity(true)
-  hs.timer.doAfter(2, function()
+  hs.timer.doAfter(0, function()
+    hs.alert.show("🍉 Watermelon! 🍉", { textSize = m.alertTextSize }, m.alertDuration)
     hs.sound.getByName("Submarine"):play()
+    hs.screen.setInvertedPolarity(true)
+  end)
+  hs.timer.doAfter(2, function()
+    hs.screen.setInvertedPolarity(false)
+    hs.sound.getByName("Submarine"):play()
+  end)
+  hs.timer.doAfter(4, function()
     hs.screen.setInvertedPolarity(false)
   end)
 
@@ -305,7 +310,7 @@ function m:_desktopText()
   end
 
   local melonBar = "🥚"
-  if m.aggregatedState.day.count > 0 then 
+  if m.aggregatedState.day.count > 0 then
     melonBar = string.rep("🍉", m.aggregatedState.day.count)
   end
 
