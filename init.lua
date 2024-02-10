@@ -35,6 +35,8 @@ m.alertSound = true
 m.alertInvert = true
 
 m.logger = logger.new('Watermelon', 'debug')
+m.setLogLevel = m.logger.setLogLevel
+
 m.timer = nil
 m.startTime = nil
 m.pauseTime = nil
@@ -250,7 +252,7 @@ function m:complete()
   pcall(function() m:_writeLogEntry() end)
 
   if m.alertDuration > 0 then
-    if( util:countToWatermelon( m.aggregatedState.day.count ) == "🍉" ) then
+    if (util:countToWatermelon(m.aggregatedState.day.count) == "🍉") then
       hs.alert.show("🍉 Watermelon! 🍉", { textSize = m.alertTextSize }, m.alertDuration)
     else
       hs.alert.show("Break Time", { textSize = m.alertTextSize }, m.alertDuration)
@@ -266,7 +268,7 @@ function m:complete()
     hs.screen.setInvertedPolarity(false)
     hs.sound.getByName("Submarine"):play()
   end)
-  
+
   hs.timer.doAfter(4, function()
     hs.screen.setInvertedPolarity(false)
   end)
